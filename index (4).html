@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #222;
+      color: #fff;
+      text-align: center;
+      padding-top: 50px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+
+    .cell {
+      background: #444;
+      border-radius: 8px;
+      font-size: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .cell:hover {
+      background: #555;
+    }
+
+    .controls {
+      margin: 20px;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tic Tac Toe</h1>
+
+  <div class="controls">
+    <button onclick="setMode('pvp')">2 Players</button>
+    <button onclick="setMode('bot')">Vs Bot</button>
+    <button onclick="resetGame()">Reset Game</button>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div id="status"></div>
+
+  <script>
+    const boardElement = document.getElementById("board");
+    const statusElement = document.getElementById("status");
+    let board = Array(9).fill(null); // board state
+    let currentPlayer = "X"; // "X" starts first
+    let gameOver = false;
+    let gameMode = "pvp"; // Default is Player vs Player
+
+    function setMode(mode) {
+      gameMode = mode;
+      resetGame();
+    }
+
+    // Reset the game to initial state
+    function resetGame() {
+      board = Array(9).fill(null);
+      currentPlayer = "X"; // X always starts
+      gameOver = false;
+      statusElement.textContent = "Current Turn: " + currentPlayer;
+      renderBoard();
+    }
+
+    // Render the game board
+    function renderBoard() {
+      boardElement.innerHTML = "";
+      board.forEach((cell, i) => {
+        const cellElement = document.createElement("div");
+        cellElement.className = "cell";
+        cellElement.textContent = cell;
+        cellElement.addEventListener("click", () => handleMove(i)); // Bind the move function
+        boardElement.appendChild(cellElement);
+      });
+    }
+
+    // Handle each player's move
+    function handleMove(index) {
+      if (board[index] || gameOver) return; // Prevent move if the cell is taken or game is over
+      board[index] = currentPlayer; // Place the mark
+      renderBoard(); // Re-render the board
+
+      // Check if current player wins
+      if (checkWinner(currentPlayer)) {
+        statusElement.textContent = currentPlayer + " wins!";
+        gameOver = true;
+        return;
+      }
+
+      // Check if it's a draw
+      if (!board.includes(null)) {
+        statusElement.textContent = "It's a draw!";
+        gameOver = true;
+        return;
+      }
+
+      // Switch player
+      currentPlayer = currentPlayer === "X" ? "O" : "X";
+      statusElement.textContent = "Current Turn: " + currentPlayer;
+
+      // If playing against bot and it's bot's turn
+      if (gameMode === "bot" && currentPlayer === "O" && !gameOver) {
+        setTimeout(botMove, 500); // Make bot move after a short delay
+      }
+    }
+
+    // Bot's move (simple AI)
+    function botMove() {
+      let move = findBestMove();
+      if (move !== -1) {
+        handleMove(move);
+      }
+    }
+
+    // Find the best move for the bot (random for now)
+    function findBestMove() {
+      // First check if bot can win
+      let move = findWinningMove("O");
+      if (move !== -1) return move;
+
+      // Then check if bot needs to block the player
+      move = findWinningMove("X");
+      if (move !== -1) return move;
+
+      // If no win/block move, choose a random empty cell
+      return board.findIndex(c => c === null);
+    }
+
+    // Find a winning move for the player
+    function findWinningMove(player) {
+      const winCombos = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+      ];
+
+      for (let combo of winCombos) {
+        const [a, b, c] = combo;
+        if (board[a] === player && board[b] === player && board[c] === null) return c;
+        if (board[a] === player && board[c] === player && board[b] === null) return b;
+        if (board[b] === player && board[c] === player && board[a] === null) return a;
+      }
+
+      return -1; // No winning move
+    }
+
+    // Check if the current player has won
+    function checkWinner(player) {
+      const winCombos = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+      ];
+
+      return winCombos.some(combo => combo.every(i => board[i] === player));
+    }
+
+    // Initial game render
+    resetGame();
+  </script>
+</body>
+</html>
